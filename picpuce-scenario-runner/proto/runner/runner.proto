@@ -1,0 +1,27 @@
+//picpuce/picpuce-server/proto/runner/runner.proto
+syntax = "proto3";
+
+service Runner {
+    rpc RunScenario(Scenario) returns (Response) {}
+    rpc AddChunk(stream Chunk) returns (Response) {}
+}
+
+message Scenario {
+    string id = 1;
+    string artifactoryUrl = 2;
+    string apiKey = 3;
+    bool done =4;
+}
+
+message Chunk {
+    string id = 1;
+    bytes content = 2;
+    string fileId = 3;
+    string scenarioId = 4;
+}
+
+message Response {
+    int32 statusCode = 1;
+    int32 totalTransferTime = 2;
+    int32 totalContentSize = 3;
+}

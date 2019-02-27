@@ -1,0 +1,8 @@
+{
+    "ArtifactoryUrl": "http://localhost:8081/artifactory/generic-local/test/",
+    "ApiKey": "",
+    "MinSize": 1000,
+    "MaxSize": 1000000,
+    "NbFiles": 60,
+    "NbThreads": 2
+  }
