@@ -10,10 +10,10 @@ node() {
         git url: 'https://github.com/jroquelaure/picpuce.git'
     }
     stage ('Build') {
-         sh "curl -fL https://getcli.jfrog.io | sh"
+        sh "curl -fL https://getcli.jfrog.io | sh"
         sh "chmod +x jfrog"
-        dir('picpuce-scenario-runner'){
-          
+        dir('picpuce-server'){
+           
             withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-ci',
             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                 sh "../jfrog rt c main --user ${USERNAME} --password ${PASSWORD} --url ${server_url} < /dev/null"
@@ -21,10 +21,13 @@ node() {
              withEnv(["GOROOT=${root}", "PATH+GO=${root}/bin"]) {
                 sh "../jfrog rt go build picpuce-go-virtual --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}}"
             }
+           
+
+            
         }
     }
     stage ('Publish') {
-        dir('picpuce-scenario-runner'){
+        dir('picpuce-server'){
             withEnv(["GOROOT=${root}", "PATH+GO=${root}/bin"]) {
                 sh "../jfrog rt gp picpuce-go-virtual 1.0 --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}"
             }
@@ -36,7 +39,7 @@ node() {
         
     }
     stage ('Promote') {
-def promotionConfig = [
+        def promotionConfig = [
             // Mandatory parameters
             'buildName'          : env.JOB_NAME,
             'buildNumber'        : env.BUILD_NUMBER,
