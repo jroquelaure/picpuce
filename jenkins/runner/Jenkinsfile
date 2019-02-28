@@ -1,11 +1,15 @@
 node() {
+     def root = tool name: 'go_tool', type: 'go'
+ 
+    // Export environment variables pointing to the directory where Go was installed
+   
     def server = Artifactory.server('europeMain')
     def server_url = server.url
     
     stage('Get sources') {
         git url: 'https://github.com/jroquelaure/picpuce.git'
     }
-    stage {'Build'} {
+    stage ('Build') {
         dir('picpuce-scenario-runner'){
             sh "curl -fL https://getcli.jfrog.io | sh"
             sh "chmod +x jfrog"
@@ -13,22 +17,27 @@ node() {
             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
                 sh "./jfrog rt c main --user ${USERNAME} --password ${PASSWORD} --url ${server_url} < /dev/null"
             }
-            sh "./jfrog rt go build go-virtual --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}}"
+             withEnv(["GOROOT=${root}", "PATH+GO=${root}/bin"]) {
+                sh "./jfrog rt go build go-virtual --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}}"
+            }
+           
 
             
         }
     }
-    stage {'Publish'} {
+    stage ('Publish') {
         dir('picpuce-scenario-runner'){
-            sh "./jfrog rt gp go-virtual --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}}"
+            withEnv(["GOROOT=${root}", "PATH+GO=${root}/bin"]) {
+                sh "./jfrog rt gp go-virtual 1.0 --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}"
+            }
             sh "./jfrog rt bce ${env.JOB_NAME} ${env.BUILD_NUMBER}" 
             sh "./jfrog rt bp ${env.JOB_NAME} ${env.BUILD_NUMBER} -server-id main"
         }
     }
-    stage {'Test'} {
+    stage ('Test') {
         
     }
-    stage {'Promote'} {
+    stage ('Promote') {
         
     }
 
