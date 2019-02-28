@@ -1,0 +1,35 @@
+node() {
+    def server = Artifactory.server('europeMain')
+    def server_url = server.url
+    
+    stage('Get sources') {
+        git url: 'https://github.com/jroquelaure/picpuce.git'
+    }
+    stage {'Build'} {
+        dir('picpuce-scenario-runner'){
+            sh "curl -fL https://getcli.jfrog.io | sh"
+            sh "chmod +x jfrog"
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-ci',
+            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                sh "./jfrog rt c main --user ${USERNAME} --password ${PASSWORD} --url ${server_url} < /dev/null"
+            }
+            sh "./jfrog rt go build go-virtual --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}}"
+
+            
+        }
+    }
+    stage {'Publish'} {
+        dir('picpuce-scenario-runner'){
+            sh "./jfrog rt gp go-virtual --build-name=${env.JOB_NAME} --build-number=${env.BUILD_NUMBER}}"
+            sh "./jfrog rt bce ${env.JOB_NAME} ${env.BUILD_NUMBER}" 
+            sh "./jfrog rt bp ${env.JOB_NAME} ${env.BUILD_NUMBER} -server-id main"
+        }
+    }
+    stage {'Test'} {
+        
+    }
+    stage {'Promote'} {
+        
+    }
+
+}
