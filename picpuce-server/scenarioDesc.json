@@ -1,8 +1,8 @@
 {
-    "ArtifactoryUrl": "http://localhost:8081/artifactory/generic-local/test/",
-    "ApiKey": "",
-    "MinSize": 1000,
-    "MaxSize": 1000000,
-    "NbFiles": 60,
+    "ArtifactoryUrl": "http://yodafrog.sas.jfrog.internal:8081/artifactory/generic-local/test/",
+    "ApiKey": "AKCp5aTkqmjtdArMWPegaGxSHxRGuZLTdKZwyyq7BrGmkb78WbTZ3gXzNVWWHaZBusL3VNWCv",
+    "MinSize": 10000,
+    "MaxSize": 10000000,
+    "NbFiles": 20,
     "NbThreads": 2
   }

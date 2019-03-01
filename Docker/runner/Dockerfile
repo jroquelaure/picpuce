@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM ubuntu:5001/alpine:latest
 
 RUN mkdir /app
 WORKDIR /app

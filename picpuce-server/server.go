@@ -105,7 +105,8 @@ func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId s
 	if err != nil {
 		log.Fatalf("%v.AddChunk(_) = _, %v", client, err)
 	}
-	chunkMaxSize := 20024
+	//chunkMaxSize := 20024
+	chunkMaxSize := 1048576
 	index := 0
 
 	for i := 0; i < len(chunk.Content); i += chunkMaxSize {
