@@ -1,6 +1,7 @@
 node() {
      def root = tool name: 'go_tool', type: 'go'
- 
+    def tagName="$params.dockerRepo/picpuce-server:${env.BUILD_NUMBER}"
+    def buildInfo = Artifactory.newBuildInfo() 
     // Export environment variables pointing to the directory where Go was installed
    
     def server = Artifactory.server('europeMain')
@@ -56,5 +57,25 @@ node() {
         // Promote build
         server.promote promotionConfig   
     }
-
+    stage ('Build Image') {
+        buildInfo.env.collect()
+        sh """sed -ie 's/ubuntu:5001/$params.dockerRepo/g' Docker/server/Dockerfile"""
+        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-ci',
+            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                sh "docker login -u ${USERNAME} -p ${PASSWORD} " + params.dockerRepo
+            }
+        sh 'cat Docker/server/Dockerfile'
+        docker.build(tagName, "-f Docker/server/Dockerfile .") 
+    }
+    stage ("Push built image") {
+        def artDocker= Artifactory.docker server: server   
+                artDocker.push(tagName, 'docker-dev-local',buildInfo)
+                server.publishBuildInfo(buildInfo)
+                
+                //sh("""curl -H 'X-JFrog-Art-Api:$password' -X DELETE $server.url/docker-dev-local/docker-framework/latest """)
+ withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-ci',
+            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+                sh("""curl -H 'X-JFrog-Art-Api:${PASSWORD}'  $server.url/api/docker/docker-dev-local/v2/promote -H "Content-Type:application/json" -d '{"targetRepo" : "docker-dev-local", "dockerRepository" : "picpuce-server", "tag" : "${env.BUILD_NUMBER}", "targetTag" : "latest", "copy": true }' """)
+            }
+}
 }

@@ -2,7 +2,7 @@
     "ArtifactoryUrl": "http://yodafrog.sas.jfrog.internal:8081/artifactory/generic-local/test/",
     "ApiKey": "AKCp5aTkqmjtdArMWPegaGxSHxRGuZLTdKZwyyq7BrGmkb78WbTZ3gXzNVWWHaZBusL3VNWCv",
     "MinSize": 10000,
-    "MaxSize": 10000000,
+    "MaxSize": 100000,
     "NbFiles": 20,
     "NbThreads": 2
   }
