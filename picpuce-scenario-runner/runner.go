@@ -24,6 +24,7 @@ import (
 	"github.com/fatih/color"
 	pr "github.com/jroquelaure/picpuce/picpuce-scenario-runner/proto/runner"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/http2"
 )
 
@@ -398,10 +399,10 @@ func readResponseBody(req *http.Request, resp *http.Response) string {
 }
 
 func main() {
-	srv := micro.NewService(
+	srv := k8s.NewService(
 
 		// This name must match the package name given in your protobuf definition
-		micro.Name("go.micro.srv.runner"),
+		micro.Name("picpuce.runner"),
 	)
 
 	// Init will parse the command line flags.
