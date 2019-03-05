@@ -402,7 +402,7 @@ func main() {
 	srv := k8s.NewService(
 
 		// This name must match the package name given in your protobuf definition
-		micro.Name("picpuce.runner"),
+		micro.Name("go.micro.srv.runner"),
 	)
 
 	// Init will parse the command line flags.
