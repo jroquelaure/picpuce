@@ -1,0 +1,21 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: picpuce-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: picpuce-server
+  template:
+    metadata:
+      labels:
+        app: picpuce-server
+    spec:
+        containers:
+        - name: picpuce-server
+          image: 35.233.36.240:5001/picpuce-server:29
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 8080
+            name: server-port

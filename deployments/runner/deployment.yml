@@ -1,0 +1,45 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: picpuce-runner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: picpuce-runner
+  template:
+    metadata:
+      labels:
+        app: picpuce-runner
+    spec:
+        containers:
+        - name: picpuce-runner
+          image: 35.233.36.240:5001/picpuce-scenario-runner:28
+          imagePullPolicy: Always
+          command: [
+            "./picpuce-scenario-runner",
+            "--selector=static",
+            "--broker_address=0.0.0.0:10001",
+            "--server_address=0.0.0.0:8080",
+          ]
+          ports:
+          - containerPort: 8080
+            name: runner-port
+        - name: health
+          command: [
+		        "/health",
+            "--health_address=0.0.0.0:8081",
+		        "--server_name=greeter",
+		        "--server_address=0.0.0.0:8080"
+	        ]
+          image: microhq/health:kubernetes
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 3
+            periodSeconds: 3
+        imagePullSecrets:
+          - name: artifcred
+        
+  
