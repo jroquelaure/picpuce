@@ -61,6 +61,7 @@ func (s *service) UploadRandomArtifacts(ctx context.Context, req *utils.Scenario
 
 	log.Println("_____ New Scenario Loaded _____")
 	srv := k8s.NewService(
+		log.Println("_____ Create micro client _____")
 		// This name must match the package name given in your protobuf definition
 		micro.Name("picpuce-runner"),
 	)
