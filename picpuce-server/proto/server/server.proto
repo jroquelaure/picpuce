@@ -1,0 +1,20 @@
+//picpuce/picpuce-server/proto/server/server.proto
+syntax = "proto3";
+
+service PicpuceServer {
+   rpc LoadScenario(ScenarioDesc) returns (Response) {}
+}
+
+message ScenarioDesc {
+    string id = 1;
+    string ArtifactoryUrl = 2;
+    string ApiKey = 3;
+    int32 MinSize = 4;
+    int32 MaxSize = 5;
+    int32 NbFiles = 6;
+    int32 NbThreads = 7;
+}
+
+message Response {
+    int32 statusCode = 1;
+}

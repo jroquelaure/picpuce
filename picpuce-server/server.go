@@ -2,17 +2,17 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
-	"os"
 	"strconv"
 	"sync"
 	"time"
 
 	// Import the generated protobuf code
-
 	pr "github.com/jroquelaure/picpuce/picpuce-scenario-runner/proto/runner"
+	pb "github.com/jroquelaure/picpuce/picpuce-server/proto/server"
 	micro "github.com/micro/go-micro"
 
 	utils "github.com/jroquelaure/picpuce/picpuce-server/utils"
@@ -33,7 +33,7 @@ const (
 		`[%d    |     %d    | ]` + "\n"
 )
 
-type service struct {
+type Service struct {
 	scenarioDescription IScenarioDescription
 }
 
@@ -57,7 +57,13 @@ type Chunk struct {
 	content []byte
 }
 
-func (s *service) UploadRandomArtifacts(ctx context.Context, req *utils.ScenarioDescription, resp *ResponseServer) error {
+func (s *Service) LoadScenario(ctx context.Context, scenarioDesc *pb.ScenarioDesc, resp *pb.Response) error {
+	//srv := service{scenarioDescription: &scenarioDesc}
+
+	return s.UploadRandomArtifacts(ctx, &utils.ScenarioDescription{MaxSize: scenarioDesc.MaxSize, MinSize: scenarioDesc.MinSize, ApiKey: scenarioDesc.ApiKey, ArtifactoryUrl: scenarioDesc.ArtifactoryUrl, NbFiles: scenarioDesc.NbFiles, NbThreads: scenarioDesc.NbThreads}, &ResponseServer{})
+}
+
+func (s *Service) UploadRandomArtifacts(ctx context.Context, req *utils.ScenarioDescription, resp *ResponseServer) error {
 
 	log.Println("_____ New Scenario Loaded _____")
 	srv := k8s.NewService(
@@ -137,7 +143,7 @@ func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId s
 	log.Printf(responseTemplateLine, reply.TotalContentSize, reply.TotalTransferTime)
 }
 
-func (s *service) RunAll(client pr.RunnerService) (*ResponseServer, error) {
+func (s *Service) RunAll(client pr.RunnerService) (*ResponseServer, error) {
 
 	scenarios := s.scenarioDescription.GetScenarios()
 	log.Printf(responseTemplateHeader)
@@ -209,26 +215,42 @@ func CreateRandomArtifact(binDescription *BinDescription) (*pr.Chunk, error) {
 }
 
 func main() {
-	// Contact the server and print out its response.
-	file := defaultFilename
-	if len(os.Args) > 1 {
-		file = os.Args[1]
-	}
-
-	scenarioDesc, err := utils.ParseFile(file)
-
-	if err != nil {
-		log.Fatalf("Could not parse file: %v", err)
-	}
 
 	cmd.Init()
+	srv := k8s.NewService(
 
-	srv := service{scenarioDescription: &scenarioDesc}
-	resp := ResponseServer{}
-	srv.UploadRandomArtifacts(context.Background(), &scenarioDesc, &resp)
-	// Create new greeter client
-	if err != nil {
-		log.Fatalf("Could not greet: %v", err)
+		// This name must match the package name given in your protobuf definition
+		micro.Name("go.micro.srv.server"),
+	)
+
+	// Init will parse the command line flags.
+	srv.Init()
+	s := new(Service)
+	pb.RegisterPicpuceServerHandler(srv.Server(), s)
+	if err := srv.Run(); err != nil {
+		fmt.Println(err)
 	}
-	log.Printf("Created: %s", resp.StatusCode)
+	// Contact the server and print out its response.
+	// file := defaultFilename
+	// if len(os.Args) > 1 {
+	// 	file = os.Args[1]
+	// }
+
+	//scenarioDesc, err := utils.ParseFile(file)
+
+	// if err != nil {
+	// 	log.Fatalf("Could not parse file: %v", err)
+	// }
+
+	//cmd.Init()
+
+	//srv := service{scenarioDescription: &scenarioDesc}
+	//resp := ResponseServer{}
+
+	//srv.UploadRandomArtifacts(context.Background(), &scenarioDesc, &resp)
+	// Create new greeter client
+	// if err != nil {
+	// 	log.Fatalf("Could not greet: %v", err)
+	// }
+	//log.Printf("Created: %s", resp.StatusCode)
 }
