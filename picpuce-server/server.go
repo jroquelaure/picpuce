@@ -62,11 +62,11 @@ func (s *service) UploadRandomArtifacts(ctx context.Context, req *utils.Scenario
 	log.Println("_____ New Scenario Loaded _____")
 	srv := k8s.NewService(
 		// This name must match the package name given in your protobuf definition
-		micro.Name("go.micro.srv.runner"),
+		micro.Name("picpuce-runner"),
 	)
 	srv.Init()
 
-	client := pr.NewRunnerService("go.micro.srv.runner", srv.Client())
+	client := pr.NewRunnerService("picpuce-runner", srv.Client())
 
 	var binDesc = &BinDescription{minSize: req.MinSize, maxSize: req.MaxSize}
 
