@@ -2,22 +2,24 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/micro/go-web"
+
 	// Import the generated protobuf code
 	pr "github.com/jroquelaure/picpuce/picpuce-scenario-runner/proto/runner"
-	pb "github.com/jroquelaure/picpuce/picpuce-server/proto/server"
-	micro "github.com/micro/go-micro"
-
 	utils "github.com/jroquelaure/picpuce/picpuce-server/utils"
-	"github.com/micro/go-micro/cmd"
+	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
+	k8sweb "github.com/micro/kubernetes/go/web"
 	"golang.org/x/net/context"
 )
 
@@ -55,12 +57,6 @@ type ResponseServer struct {
 
 type Chunk struct {
 	content []byte
-}
-
-func (s *Service) LoadScenario(ctx context.Context, scenarioDesc *pb.ScenarioDesc, resp *pb.Response) error {
-	//srv := service{scenarioDescription: &scenarioDesc}
-
-	return s.UploadRandomArtifacts(ctx, &utils.ScenarioDescription{MaxSize: scenarioDesc.MaxSize, MinSize: scenarioDesc.MinSize, ApiKey: scenarioDesc.ApiKey, ArtifactoryUrl: scenarioDesc.ArtifactoryUrl, NbFiles: scenarioDesc.NbFiles, NbThreads: scenarioDesc.NbThreads}, &ResponseServer{})
 }
 
 func (s *Service) UploadRandomArtifacts(ctx context.Context, req *utils.ScenarioDescription, resp *ResponseServer) error {
@@ -216,41 +212,41 @@ func CreateRandomArtifact(binDescription *BinDescription) (*pr.Chunk, error) {
 
 func main() {
 
-	cmd.Init()
-	srv := k8s.NewService(
-
-		// This name must match the package name given in your protobuf definition
-		micro.Name("go.micro.srv.server"),
+	service := k8sweb.NewService(
+		web.Name("go.micro.srv.server"),
 	)
 
-	// Init will parse the command line flags.
-	srv.Init()
 	s := new(Service)
-	pb.RegisterPicpuceServerHandler(srv.Server(), s)
-	if err := srv.Run(); err != nil {
+
+	service.HandleFunc("/LoadScenario", func(rsp http.ResponseWriter, req *http.Request) {
+		scenarioDesc := &utils.ScenarioDescription{}
+
+		json.Unmarshal([]byte("req"), scenarioDesc)
+		// maxSize, err := strconv.Atoi(req.PathParameter("MaxSize"))
+		// minSize, err := strconv.Atoi(req.PathParameter("MinSize"))
+		// nbFiles, err := strconv.Atoi(req.PathParameter("NbFiles"))
+		// nbThreads, err := strconv.Atoi(req.PathParameter("NbThreads"))
+
+		// scenarioDesc := &utils.ScenarioDescription{
+		// 	MaxSize:        int32(maxSize),
+		// 	MinSize:        int32(minSize),
+		// 	ApiKey:         req.PathParameter("ApiKey"),
+		// 	ArtifactoryUrl: req.PathParameter("ArtifactoryUrl"),
+		// 	NbFiles:        int32(nbFiles),
+		// 	NbThreads:      int32(nbThreads)}
+
+		resp := &ResponseServer{}
+		err := s.UploadRandomArtifacts(context.Background(), scenarioDesc, resp)
+		if err != nil {
+			//rsp.WriteError(500, err)
+		}
+		rsp.Write([]byte("done"))
+	})
+
+	service.Init()
+
+	if err := service.Run(); err != nil {
 		fmt.Println(err)
 	}
-	// Contact the server and print out its response.
-	// file := defaultFilename
-	// if len(os.Args) > 1 {
-	// 	file = os.Args[1]
-	// }
 
-	//scenarioDesc, err := utils.ParseFile(file)
-
-	// if err != nil {
-	// 	log.Fatalf("Could not parse file: %v", err)
-	// }
-
-	//cmd.Init()
-
-	//srv := service{scenarioDescription: &scenarioDesc}
-	//resp := ResponseServer{}
-
-	//srv.UploadRandomArtifacts(context.Background(), &scenarioDesc, &resp)
-	// Create new greeter client
-	// if err != nil {
-	// 	log.Fatalf("Could not greet: %v", err)
-	// }
-	//log.Printf("Created: %s", resp.StatusCode)
 }
