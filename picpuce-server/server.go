@@ -218,6 +218,9 @@ func main() {
 
 	s := new(Service)
 
+	service.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "This is a website server by a Go HTTP server.")
+	})
 	service.HandleFunc("/LoadScenario", func(rsp http.ResponseWriter, req *http.Request) {
 		scenarioDesc := &utils.ScenarioDescription{}
 
