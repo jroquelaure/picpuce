@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -223,25 +224,24 @@ func main() {
 	})
 	service.HandleFunc("/LoadScenario", func(rsp http.ResponseWriter, req *http.Request) {
 		scenarioDesc := &utils.ScenarioDescription{}
-		s.scenarioDescription = scenarioDesc
-		json.Unmarshal([]byte("req"), scenarioDesc)
-		// maxSize, err := strconv.Atoi(req.PathParameter("MaxSize"))
-		// minSize, err := strconv.Atoi(req.PathParameter("MinSize"))
-		// nbFiles, err := strconv.Atoi(req.PathParameter("NbFiles"))
-		// nbThreads, err := strconv.Atoi(req.PathParameter("NbThreads"))
 
-		// scenarioDesc := &utils.ScenarioDescription{
-		// 	MaxSize:        int32(maxSize),
-		// 	MinSize:        int32(minSize),
-		// 	ApiKey:         req.PathParameter("ApiKey"),
-		// 	ArtifactoryUrl: req.PathParameter("ArtifactoryUrl"),
-		// 	NbFiles:        int32(nbFiles),
-		// 	NbThreads:      int32(nbThreads)}
+		body, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			panic(err)
+		}
+		log.Println(string(body))
+		err = json.Unmarshal(body, scenarioDesc)
+		if err != nil {
+			panic(err)
+		}
+		log.Println(scenarioDesc.MaxSize)
+		s.scenarioDescription = scenarioDesc
 
 		resp := &ResponseServer{}
-		err := s.UploadRandomArtifacts(context.Background(), scenarioDesc, resp)
+		err = s.UploadRandomArtifacts(context.Background(), scenarioDesc, resp)
 		if err != nil {
-			//rsp.WriteError(500, err)
+			rsp.Write([]byte("error"))
+			log.Fatal(err)
 		}
 		rsp.Write([]byte("done"))
 	})
