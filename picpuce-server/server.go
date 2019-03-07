@@ -223,7 +223,7 @@ func main() {
 	})
 	service.HandleFunc("/LoadScenario", func(rsp http.ResponseWriter, req *http.Request) {
 		scenarioDesc := &utils.ScenarioDescription{}
-
+		s.scenarioDescription = scenarioDesc
 		json.Unmarshal([]byte("req"), scenarioDesc)
 		// maxSize, err := strconv.Atoi(req.PathParameter("MaxSize"))
 		// minSize, err := strconv.Atoi(req.PathParameter("MinSize"))
