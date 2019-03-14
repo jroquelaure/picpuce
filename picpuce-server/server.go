@@ -127,24 +127,16 @@ func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId s
 		}
 
 		err = stream.RecvMsg(reply)
+		log.Printf(" %s chunks sent", strconv.Itoa(index))
 		if err != nil {
 			fmt.Println("recv err", err)
+			if err != io.EOF {
+				log.Fatalf("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
+			}
 			break
 		}
-		log.Printf(" %s chunks sent", strconv.Itoa(index))
-	}
 
-	log.Printf("Waiting Response after %s chunks sent", strconv.Itoa(index))
-	err = stream.RecvMsg(reply)
-	log.Printf(" %s chunks sent", strconv.Itoa(index))
-	if err != nil {
-		if err != io.EOF {
-			log.Fatalf("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
-		}
-
-		//log.Printf(responseTemplateLine, reply.TotalContentSize, reply.TotalTransferTime)
 	}
-	log.Printf(responseTemplateLine, reply.TotalContentSize, reply.TotalTransferTime)
 }
 
 func (s *Service) RunAll(client pr.RunnerService) (*ResponseServer, error) {
