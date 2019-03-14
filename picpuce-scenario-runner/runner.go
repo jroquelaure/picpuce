@@ -59,7 +59,7 @@ const (
 // }
 
 type Service struct {
-	mu          sync.RWMutex
+	sync.RWMutex
 	savedChunks map[string]map[string][]*pr.Chunk
 }
 
@@ -101,7 +101,7 @@ func (s *Service) AddChunk(ctx context.Context, stream pr.Runner_AddChunkStream)
 		}
 		nbChunks++
 		log.Printf("Chunk # : %s", nbChunks)
-		s.mu.Lock()
+		s.Lock()
 		log.Printf("Chunk # : %s after lock", nbChunks)
 		if s.savedChunks[chunkReceived.ScenarioId] == nil {
 			s.savedChunks[chunkReceived.ScenarioId] = make(map[string][]*pr.Chunk)
@@ -111,7 +111,7 @@ func (s *Service) AddChunk(ctx context.Context, stream pr.Runner_AddChunkStream)
 		}
 		s.savedChunks[chunkReceived.ScenarioId][chunkReceived.FileId] = append(s.savedChunks[chunkReceived.ScenarioId][chunkReceived.FileId], chunkReceived)
 		totalContentSize = totalContentSize + int32(len(s.savedChunks[chunkReceived.ScenarioId][chunkReceived.FileId]))
-		s.mu.Unlock()
+		s.Unlock()
 		log.Printf("_________Chunk # : %s total content is now %s", nbChunks, totalContentSize)
 		errst := stream.SendMsg(&pr.Response{
 			StatusCode:        200,
