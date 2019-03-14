@@ -101,16 +101,17 @@ func (s *Service) UploadRandomArtifacts(ctx context.Context, req *utils.Scenario
 
 func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId string) {
 	chunk.FileId = id
-
+	reply := &pr.Response{}
 	//ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	//defer cancel()
 	//client.RunScenario(ctx, &pr.Scenario{})
 	stream, err := client.AddChunk(context.Background())
+	defer stream.Close()
 	if err != nil {
 		log.Fatalf("%v.AddChunk(_) = _, %v", client, err)
 	}
 	//chunkMaxSize := 20024
-	chunkMaxSize := 1048576
+	chunkMaxSize := 64 * 1024
 	index := 0
 
 	for i := 0; i < len(chunk.Content); i += chunkMaxSize {
@@ -124,17 +125,23 @@ func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId s
 		if err := stream.Send(&pr.Chunk{ScenarioId: scenarioId, FileId: id, Id: string(index), Content: chunk.Content[i:end]}); err != nil {
 			log.Fatalf("%v.Send(%v) = %v", stream, chunk.Content[i:end], err)
 		}
+
+		err = stream.RecvMsg(reply)
+		if err != nil {
+			fmt.Println("recv err", err)
+			break
+		}
+		log.Printf(" %s chunks sent", strconv.Itoa(index))
 	}
 
 	log.Printf("Waiting Response after %s chunks sent", strconv.Itoa(index))
-	reply := &pr.Response{}
 	err = stream.RecvMsg(reply)
 	log.Printf(" %s chunks sent", strconv.Itoa(index))
 	if err != nil {
 		if err != io.EOF {
 			log.Fatalf("%v.CloseAndRecv() got error %v, want %v", stream, err, nil)
 		}
-		stream.Close()
+
 		//log.Printf(responseTemplateLine, reply.TotalContentSize, reply.TotalTransferTime)
 	}
 	log.Printf(responseTemplateLine, reply.TotalContentSize, reply.TotalTransferTime)
