@@ -10,8 +10,20 @@ func TestCreateRandomArtifact(t *testing.T) {
 	tables := []BinDescription{
 
 		{
-			minSize: 1024 * 1024 * 1024,
+			minSize: 2*1024*1024*1024 - 1,
+			maxSize: 2*1024*1024*1024 - 1,
+		},
+		{
+			minSize: 1 * 1024 * 1024,
+			maxSize: 100 * 1024 * 1024,
+		},
+		{
+			minSize: 100 * 1024 * 1024,
 			maxSize: 1024 * 1024 * 1024,
+		},
+		{
+			minSize: 10 * 1024 * 1024,
+			maxSize: 110 * 1024 * 1024,
 		},
 	}
 
