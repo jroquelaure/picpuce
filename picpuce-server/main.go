@@ -1,4 +1,3 @@
-//picpuce/picpuce-server/main.go
 package main
 
 import (
@@ -187,7 +186,7 @@ func RunScenario(response chan<- *pr.Response, wg *sync.WaitGroup, scenario *pr.
 	defer cancel()
 	r, err := client.RunScenario(ctx, scenario)
 	if err != nil {
-		log.Println("Failed to run scenario: %s", scenario.Id)
+		log.Printf("Failed to run scenario: %s", scenario.Id)
 		return
 	}
 
@@ -197,14 +196,21 @@ func RunScenario(response chan<- *pr.Response, wg *sync.WaitGroup, scenario *pr.
 	wg.Done()
 }
 
-//CreateRandomArtifact creates a random binary according to BinDescription object
+//CreateRandomArtifact creates a random binary with sith in MB according to BinDescription object
 func CreateRandomArtifact(binDescription *BinDescription) (*pr.Chunk, error) {
 
 	//save the bin
 	var irange int
-	irange = int(binDescription.maxSize - binDescription.minSize)
-	nbBytes := rand.Intn(irange) + int(binDescription.minSize)
-	randBytes := make([]byte, nbBytes*1)
+	var maxMB int64
+	var minMB int64
+	maxMB = int64(binDescription.maxSize) * 8
+	minMB = int64(binDescription.minSize) * 8
+	irange = int(maxMB - minMB)
+	nbBytes := int(minMB)
+	if irange > 0 {
+		nbBytes = nbBytes + rand.Intn(irange)
+	}
+	randBytes := make([]byte, nbBytes)
 	rand.Read(randBytes)
 
 	return &pr.Chunk{Content: randBytes}, nil
