@@ -20,20 +20,20 @@ func TestCreateRandomArtifact(t *testing.T) {
 	tables := []BinDescription{
 
 		{
-			minSize: 2*1024*1024*1024 - 1,
-			maxSize: 2*1024*1024*1024 - 1,
+			minSize: 2*1024*1024 - 1,
+			maxSize: 2*1024*1024 - 1,
 		},
 		{
 			minSize: 1 * 1024 * 1024,
 			maxSize: 100 * 1024 * 1024,
 		},
 		{
-			minSize: 100 * 1024 * 1024,
-			maxSize: 1024 * 1024 * 1024,
+			minSize: 100 * 1024,
+			maxSize: 1024 * 1024,
 		},
 		{
-			minSize: 10 * 1024 * 1024,
-			maxSize: 110 * 1024 * 1024,
+			minSize: 10 * 1024,
+			maxSize: 110 * 1024,
 		},
 	}
 
@@ -105,7 +105,11 @@ func TestSendChunk(t *testing.T) {
 
 		cs.EXPECT().Send(
 			gomock.Any(),
-		).Return(nil).Times(table.expectedChunk)
+		).Return(nil).MinTimes(table.expectedChunk)
+
+		cs.EXPECT().Send(
+			gomock.Any(),
+		).Return(nil).MaxTimes(table.expectedChunk)
 
 		cs.EXPECT().Close().Return(nil)
 
