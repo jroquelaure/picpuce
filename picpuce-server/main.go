@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -24,6 +25,8 @@ import (
 )
 
 const (
+	chunkMaxSize = 64 * 1024
+
 	defaultFilename = "scenarioDesc.json"
 	// artifactoryURL = "http://localhost:8081/artifactory/generic-local/test/"
 	// APIKey         = "AKCp5bB3YhxXqcWTHyFksyqvpczd3Mx8uPepC8yfZFvPAsFcZ5AZrCmr2c3zWWT5DxsV6S9qU"
@@ -35,30 +38,35 @@ const (
 		`[%d    |     %d    | ]` + "\n"
 )
 
+//Service interface
 type Service struct {
 	scenarioDescription IScenarioDescription
 }
 
+//IScenarioDescription Scenario description interface
 type IScenarioDescription interface {
 	Create(*pr.Scenario) (*pr.Scenario, error)
 	GetScenarios() []*pr.Scenario
 }
 
+//BinDescription Binary description
 type BinDescription struct {
 	id      string
 	minSize int32
 	maxSize int32
 }
 
+//ResponseServer Response server
 type ResponseServer struct {
 	StatusCode        int32
 	TotalTransferTime int32
 }
 
-type Chunk struct {
-	content []byte
-}
+// type Chunk struct {
+// 	content []byte
+// }
 
+//UploadRandomArtifacts upload randon artifacts
 func (s *Service) UploadRandomArtifacts(ctx context.Context, req *utils.ScenarioDescription, resp *ResponseServer) error {
 
 	log.Println("_____ New Scenario Loaded _____")
@@ -98,7 +106,13 @@ func (s *Service) UploadRandomArtifacts(ctx context.Context, req *utils.Scenario
 	return err
 }
 
-func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId string) {
+//SendChunk send chunk
+func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioID string) error {
+
+	if client == nil {
+		return errors.New("Client is nil")
+	}
+
 	chunk.FileId = id
 	reply := &pr.Response{}
 	//ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -110,7 +124,6 @@ func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId s
 		log.Fatalf("%v.AddChunk(_) = _, %v", client, err)
 	}
 	//chunkMaxSize := 20024
-	chunkMaxSize := 64 * 1024
 	index := 0
 
 	for i := 0; i < len(chunk.Content); i += chunkMaxSize {
@@ -120,8 +133,8 @@ func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId s
 		if end > len(chunk.Content) {
 			end = len(chunk.Content)
 		}
-		time.Sleep(5)
-		if err := stream.Send(&pr.Chunk{ScenarioId: scenarioId, FileId: id, Id: string(index), Content: chunk.Content[i:end]}); err != nil {
+		//time.Sleep(5)
+		if err := stream.Send(&pr.Chunk{ScenarioId: scenarioID, FileId: id, Id: string(index), Content: chunk.Content[i:end]}); err != nil {
 			log.Fatalf("%v.Send(%v) = %v", stream, chunk.Content[i:end], err)
 		}
 
@@ -136,8 +149,10 @@ func SendChunk(client pr.RunnerService, chunk *pr.Chunk, id string, scenarioId s
 		}
 
 	}
+	return nil
 }
 
+//RunAll run all scenarios
 func (s *Service) RunAll(client pr.RunnerService) (*ResponseServer, error) {
 
 	scenarios := s.scenarioDescription.GetScenarios()
@@ -181,6 +196,7 @@ func (s *Service) RunAll(client pr.RunnerService) (*ResponseServer, error) {
 	return &ResponseServer{StatusCode: 200, TotalTransferTime: 1}, nil
 }
 
+//RunScenario run scenario
 func RunScenario(response chan<- *pr.Response, wg *sync.WaitGroup, scenario *pr.Scenario, client pr.RunnerService) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3600*time.Second)
 	defer cancel()
