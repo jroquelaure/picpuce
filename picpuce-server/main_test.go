@@ -55,7 +55,7 @@ func TestSendChunk(t *testing.T) {
 	//Init
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	nbBytes := 110 * 1024 * 1024
+	nbBytes := 110 * 1024
 	chunkMaxSize := 64 * 1024
 	nbChunk := nbBytes / chunkMaxSize
 	randBytes := make([]byte, nbBytes)
